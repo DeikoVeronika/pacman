@@ -1,20 +1,23 @@
+// Клас SoundManager відповідає за відтворення звуків гри залежно від подій
 var SoundManager = (function() {
   var sounds = {
-    pellet1: null,
-    pellet2: null,
-    powerpellet: null,
-    eatghost: null,
-    pacman_dies: null,
-    intro: null,
-    eatfruit: null
+    pellet1: null,      // Звук поїдання маленької кульки
+    pellet2: null,      // Звук поїдання маленької кульки (альтернативний)
+    powerpellet: null,  // Звук поїдання великої кульки
+    eatghost: null,     // Звук поїдання привида
+    pacman_dies: null,  // Звук смерті Pacman
+    intro: null,        // Мелодія початку гри
+    eatfruit: null      // Звук поїдання фрукта
   };
   
+  // Завантаження звуків
   for (var i in sounds) {
     var snd = new Audio("sounds/" + i + ".ogg");
     sounds[i] = snd;
   }
   
   return {
+    // Відтворює відповідний звук залежно від події
     notify: function (event) {
       if (event.name == EVENT_PELLET_EATEN) {
         sounds[event.pacman.getEatenPelletSound()].play();
