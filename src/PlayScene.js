@@ -31,7 +31,8 @@ function PlayScene(game, maps) {
 
   this.setGhostScoreValue(200);
   this._pointsMessage = new PointsMessage(this);
-  this._pacmanDiesPause = new PacmanDiesPause(this, game);
+   this._pacmanDiesPause = new PacmanDiesPause(this, game);
+  this._lairBounds = null; // щоб зберігати координати прямокутника лігва
   this._game.getEventManager().fireEvent({'name': EVENT_PLAYSCENE_READY});
 }
 
@@ -133,6 +134,10 @@ PlayScene.prototype.loadMap = function (map) {
   this._pellets = [];
   this._ghosts = [];
 
+  // Ініціалізуємо об'єкт для меж лігва в координатах плиток
+  this._lairBounds = { top: Infinity, left: Infinity, right: -Infinity, bottom: -Infinity };
+  let lairTilesFound = false;
+
   var numRows = map.length;
   var numCols = map[0].length;
 
@@ -144,6 +149,17 @@ PlayScene.prototype.loadMap = function (map) {
       var tile = map[row][col];
       var position = new Position(col * TILE_SIZE, row * TILE_SIZE);
 
+      // --- Логіка для визначення меж лігва ---
+      // Перевіряємо, чи є плитка частиною лігва, і оновлюємо межі
+      if (tile === '-' || tile === '1' || tile === '2' || tile === '3' || tile === '4') {
+          lairTilesFound = true;
+          this._lairBounds.left   = Math.min(this._lairBounds.left, col);
+          this._lairBounds.right  = Math.max(this._lairBounds.right, col);
+          this._lairBounds.top    = Math.min(this._lairBounds.top, row);
+          this._lairBounds.bottom = Math.max(this._lairBounds.bottom, row);
+      }
+
+      // --- Основна логіка створення об'єктів ---
       if (tile == '#') {
         var wall = new Wall(this._getWallImage(map, row, col), this);
         wall.setPosition(position);
@@ -163,8 +179,10 @@ PlayScene.prototype.loadMap = function (map) {
         this._lairPosition = new Position(position.x, position.y + TILE_SIZE);
 
         var gate = new Gate(this);
-        position.y += (TILE_SIZE - GATE_HEIGHT) / 2 + 1;
-        gate.setPosition(position);
+        // Створюємо копію позиції, щоб не змінювати оригінал для наступних об'єктів
+        var gatePosition = new Position(position.x, position.y);
+        gatePosition.y += (TILE_SIZE - GATE_HEIGHT) / 2 + 1;
+        gate.setPosition(gatePosition);
         this._gate = gate;
       }
       else if (tile == 'C') {
@@ -196,6 +214,34 @@ PlayScene.prototype.loadMap = function (map) {
       }
     }
   }
+
+  // --- Фіналізація меж лігва ---
+  // Після циклу, конвертуємо координати плиток у пікселі
+  if (lairTilesFound) {
+    this._lairBounds.left *= TILE_SIZE;
+    // Для правої та нижньої межі додаємо 1, щоб включити повну ширину/висоту плитки
+    this._lairBounds.right = (this._lairBounds.right + 1) * TILE_SIZE;
+    this._lairBounds.top *= TILE_SIZE;
+    this._lairBounds.bottom = (this._lairBounds.bottom + 1) * TILE_SIZE;
+  } else {
+    this._lairBounds = null; // Якщо на карті немає лігва
+  }
+};
+
+// Перевіряє, чи знаходиться позиція всередині визначених меж лігва
+PlayScene.prototype.isPositionInLair = function (position) {
+  if (!this._lairBounds) {
+    return false;
+  }
+  
+  // Для надійності перевіряємо центр об'єкта
+  const centerX = position.x + TILE_SIZE / 2;
+  const centerY = position.y + TILE_SIZE / 2;
+
+  return centerX > this._lairBounds.left &&
+         centerX < this._lairBounds.right &&
+         centerY > this._lairBounds.top &&
+         centerY < this._lairBounds.bottom;
 };
 
 // Визначає тип зображення для стіни залежно від оточення
@@ -490,12 +536,22 @@ PlayScene.prototype._getDefaultMaps = function () {
 // Повертає шлях до лігва для привида (A* пошук)
 PlayScene.prototype.getWaypointsToLairForGhost = function (ghost) {
   var result = [];
-  var from = [this.pxToCoord(ghost.getX()), this.pxToCoord(ghost.getY())];
-  var to = [this.pxToCoord(this._lairPosition.x), this.pxToCoord(this._lairPosition.y)];
+  var from = [this.pxToCoord(ghost.getX()), this.pxToCoord(ghost.getY())]; // Визначаємо стартову точку: конвертуємо поточну позицію привида з пікселів у координати сітки.
+  var to = [this.pxToCoord(this._lairPosition.x), this.pxToCoord(this._lairPosition.y)]; // Визначаємо кінцеву точку: конвертуємо позицію лігва з пікселів у координати сітки.
+  
+  // Викликаємо алгоритм A*, щоб знайти найкоротший шлях.
+  // this._getGrid() — повертає карту стін для алгоритму.
+  // `wayPoints` — це результат, масив координат сітки.
   var wayPoints = AStar(this._getGrid(), from, to);
+  
+  // Перебираємо кожну точку маршруту, отриману від A*
   for (var wp in wayPoints) {
+    // Конвертуємо координати кожної точки назад з сітки в пікселі
+    // і створюємо новий об'єкт Position, який додаємо до фінального результату.
     result.push(new Position(wayPoints[wp][0] * TILE_SIZE, wayPoints[wp][1] * TILE_SIZE));
   }
+
+  // Повертаємо готовий покроковий маршрут у піксельних координатах.
   return result;
 };
 

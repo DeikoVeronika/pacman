@@ -155,18 +155,25 @@ Pacman.prototype.getEatenPelletSound = function () {
 
 // Обробляє зіткнення з привидами
 Pacman.prototype.handleCollisionsWithGhosts = function () {
-  var ghosts = this._scene.getGhosts();
+  var ghosts = this._scene.getGhosts(); // Отримуємо список усіх привидів на сцені
+  
+  // Перебираємо всіх привидів у циклі
   for (var i in ghosts) {
     var ghost = ghosts[i];
+
+    // зіткнення пакмена та привида
     if (this._sprite.collidedWith(ghost)) {
+
+      //Пакмен натрапив на небезпечного привида
       if (ghost.getState() == GHOST_STATE_NORMAL) {
-        this._scene.getPacmanDiesPause().activate();
+        this._scene.getPacmanDiesPause().activate(); // // Активуємо анімацію смерті Пакмена
         return;
       }
+      //Пакмен з'їв вразливого привида
       else if (ghost.getState() == GHOST_STATE_VULNERABLE) {
-        this._game.getEventManager().fireEvent({'name': EVENT_GHOST_EATEN});
-        ghost.runHome();
-        this._scene.addScoreForEatenGhost(ghost);
+        this._game.getEventManager().fireEvent({'name': EVENT_GHOST_EATEN}); // Сповіщаємо гру про подію, щоб програти звук
+        ghost.runHome(); // Наказуємо саме цьому привиду бігти додому
+        this._scene.addScoreForEatenGhost(ghost); // Нараховуємо гравцеві очки
       }
     }
   }
