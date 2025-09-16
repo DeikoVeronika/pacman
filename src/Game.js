@@ -1,7 +1,7 @@
 // Клас Game відповідає за поточну сцену гри та менеджер подій
 function Game() {
-  this._scene = new StartupScene(this); // Поточна сцена (стартова)
-  this._eventManager = new EventManager(); // Менеджер подій
+  this._eventManager = new EventManager();
+  this._scene = new PlayScene(this);
 }
 
 // Повертає менеджер подій

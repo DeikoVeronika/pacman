@@ -68,6 +68,11 @@ Pacman.prototype.setStrategy = function (strategy) {
 // Оновлює стан Pacman (делегує стратегії)
 Pacman.prototype.tick = function () {
   this._strategy.tick();
+
+    // Перевіряємо, чи залишилися крапки на рівні
+  if (this._scene.getPellets().length === 0) {
+    this._scene.nextLevel(); // Якщо крапок немає, переходимо на наступний рівень
+  }
 };
 
 // Змінює кадр анімації руху
@@ -240,10 +245,14 @@ Pacman.prototype._resetDeathFrame = function () {
 
 // Викликається після завершення анімації смерті
 Pacman.prototype.diesAnimationCompleted = function () {
+  // Перевіряємо, чи це було останнє життя
   if (this._livesCount == 0) {
-      this._game.setScene(new StartupScene(this._game));
+    localStorage.setItem('lastPacmanScore', this._scene.getScore());
+    window.location.reload();
     return;
   }
+
+  // Цей код виконується, якщо життя ще залишилися
   this.setStrategy(new PacmanPlaySceneStrategy(this, this._scene));
   this._livesCount--;
   this._scene.getReadyMessage().setVisibilityDuration(READY_MESSAGE_DURATION_SHORT);

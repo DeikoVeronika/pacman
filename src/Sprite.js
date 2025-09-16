@@ -68,9 +68,8 @@ Sprite.prototype.move = function (direction) {
   }
 };
 
-/**
- * Перевіряє, чи вийшов спрайт за межі карти, і переносить його на протилежний бік, якщо потрібно.
- */
+// Перевіряє, чи вийшов спрайт за межі карти, і переносить його на протилежний бік, якщо потрібно.
+
 Sprite.prototype.checkIfOutOfMapBounds = function () {
   if (this.getRight() > this._scene.getRight()) {
     this.setPosition(new Position(this._scene.getLeft(), this.getY()));

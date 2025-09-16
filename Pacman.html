@@ -5,6 +5,42 @@
   
   <link rel="stylesheet" type="text/css" href="css/Pacman.css" />
   
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Lucida Console', Monaco, monospace;
+    }
+    #menu {
+      text-align: center;
+    }
+    #menu h1 {
+      color: #FFFF00; /* Жовтий колір як у Pac-Man */
+      font-size: 3em;
+    }
+    #menu button {
+      background-color: #0000FF; /* Синій */
+      color: white;
+      border: 2px solid white;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin: 10px;
+    }
+    #menu button:hover {
+      background-color: #FFFFFF;
+      color: #0000FF;
+    }
+    #main {
+      display: none; /* Ховаємо ігрове поле до старту гри */
+    }
+  </style>
+  
   <script type="text/javascript" src="lib/AStar.js"></script>
   
   <script type="text/javascript" src="src/Keyboard.js"></script>
@@ -40,17 +76,48 @@
   <script type="text/javascript" src="src/ImageManager.js"></script>
   <script type="text/javascript" src="src/SoundManager.js"></script>
   
-  <script type="text/javascript">
-    $(function () {
-      var gameRunner = new GameRunner();
-      gameRunner.run();
-    });
-  </script>
 </head>
 
 <body>
-  <div id="main">
-    
+  <div id="menu">
+      <h1>PAC-MAN</h1>
+      <p id="last-score"></p>
+      <p>Оберіть рівень складності:</p>
+      <button onclick="startGame('easy')">Легкий</button>
+      <button onclick="startGame('normal')">Нормальний</button>
+      <button onclick="startGame('hard')">Складний</button>
   </div>
+
+  <div id="main">
+    </div>
+
+  <script type="text/javascript">
+    // Цей код виконується, коли сторінка повністю завантажилась
+    window.onload = function() {
+      const lastScore = localStorage.getItem('lastPacmanScore');
+      if (lastScore !== null) {
+        document.getElementById('last-score').textContent = 'Your last score: ' + lastScore;
+      }
+    };
+
+    // Глобальна змінна для зберігання рівня складності
+    var gameDifficulty = 'normal';
+
+    // Функція, яка запускає гру
+    function startGame(difficulty) {
+      // 1. Встановлюємо обрану складність
+      gameDifficulty = difficulty;
+      
+      // 2. Ховаємо меню
+      document.getElementById('menu').style.display = 'none';
+      
+      // 3. Показуємо ігровий контейнер
+      document.getElementById('main').style.display = 'block';
+
+      // 4. Запускаємо гру
+      var gameRunner = new GameRunner();
+      gameRunner.run();
+    }
+  </script>
 </body>
 </html>
